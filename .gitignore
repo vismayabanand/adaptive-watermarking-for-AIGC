@@ -1,0 +1,4 @@
+#awfa-venv/lib/python3.11/site-packages/torch/lib/libtorch_cpu.dylib
+awfa-venv/
+__pycache__/
+.DS_Store
