@@ -1,5 +1,6 @@
 # src/static_experiment.py
 
+import argparse
 import json
 import random
 from pathlib import Path
@@ -13,7 +14,7 @@ from markllm.utils.transformers_config import TransformersConfig
 def get_prompts(n: int):
     """
     Return a list of simple prompts.
-    Later we can swap this with a real dataset (AG News etc.).
+    You already used something like this before.
     """
     base_prompts = [
         "Explain why large language models need watermarking in simple words.",
@@ -25,9 +26,8 @@ def get_prompts(n: int):
         "Explain what a database index is and why it is useful.",
         "Describe cloud computing in simple terms.",
         "Why is cybersecurity important today?",
-        "Explain what open source software means.",
+        "Explain what open source software means."
     ]
-    # If n > len(base_prompts), we can just sample with replacement
     prompts = []
     for _ in range(n):
         prompts.append(random.choice(base_prompts))
@@ -35,15 +35,41 @@ def get_prompts(n: int):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--algorithm-config",
+        type=str,
+        required=True,
+        help="Path to KGW algorithm config JSON (e.g., config/KGW_delta_1.json)",
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        required=True,
+        help="Output JSONL path (e.g., experiments/static_delta1.jsonl)",
+    )
+    parser.add_argument(
+        "--num-prompts",
+        type=int,
+        default=50,
+        help="Number of prompts to generate (each will have wm + unwm).",
+    )
+    args = parser.parse_args()
+
+    algo_config_path = Path(args.algorithm_config)
+    out_path = Path(args.output)
+    num_prompts = args.num_prompts
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
     device = "cpu"
     print("Using device:", device)
 
-    # Small model for local CPU runs
+    # Small model for CPU
     model_name = "gpt2"
     print(f"Loading model: {model_name}")
     model = AutoModelForCausalLM.from_pretrained(model_name).to(device)
     tokenizer = AutoTokenizer.from_pretrained(model_name)
-
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
@@ -58,25 +84,23 @@ def main():
         no_repeat_ngram_size=4,
     )
 
-    print("Loading KGW watermark...")
-    wm = AutoWatermark.load("KGW", transformers_config=transformers_config)
+    print(f"Loading KGW watermark with config: {algo_config_path}")
+    wm = AutoWatermark.load(
+        "KGW",
+        algorithm_config=str(algo_config_path),
+        transformers_config=transformers_config,
+    )
 
-    # How many prompts / samples to generate
-    num_prompts = 50  # you can increase later
     prompts = get_prompts(num_prompts)
-
-    out_path = Path("experiments/static_baseline_samples.jsonl")
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-
-    print(f"Generating {num_prompts} prompts, watermarked + unwatermarked...")
     num_written = 0
+
+    print(f"Generating {num_prompts} prompts (wm + unwm) to {out_path} ...")
 
     with out_path.open("w", encoding="utf-8") as f:
         for i, prompt in enumerate(prompts):
             # 1) Watermarked generation
             wm_text = wm.generate_watermarked_text(prompt)
             wm_detect = wm.detect_watermark(wm_text)
-
             record_wm = {
                 "id": f"sample_{i}_wm",
                 "prompt": prompt,
@@ -90,7 +114,6 @@ def main():
             # 2) Unwatermarked generation
             uwm_text = wm.generate_unwatermarked_text(prompt)
             uwm_detect = wm.detect_watermark(uwm_text)
-
             record_uwm = {
                 "id": f"sample_{i}_unwm",
                 "prompt": prompt,

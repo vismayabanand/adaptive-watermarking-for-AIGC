@@ -6,7 +6,7 @@ import statistics
 
 
 def main():
-    in_path = Path("experiments/static_agnews_with_features.jsonl")
+    in_path = Path("experiments/static_agnews_samples.jsonl")
     if not in_path.exists():
         raise FileNotFoundError(
             f"{in_path} not found. Run src/compute_features_generic.py first."
