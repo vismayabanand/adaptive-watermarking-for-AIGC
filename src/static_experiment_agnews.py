@@ -1,5 +1,6 @@
 # src/static_experiment_agnews.py
 
+import argparse
 import json
 from pathlib import Path
 
@@ -10,10 +11,35 @@ from markllm.utils.transformers_config import TransformersConfig
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--algorithm-config",
+        type=str,
+        default="config/KGW_delta_2.json",
+        help="Path to KGW algorithm config JSON (default: config/KGW_delta_2.json)",
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        default="experiments/static_agnews_delta2.jsonl",
+        help="Output JSONL path",
+    )
+    parser.add_argument(
+        "--num-samples",
+        type=int,
+        default=200,
+        help="How many AG News samples to use (train[:num-samples])",
+    )
+    args = parser.parse_args()
+
+    algo_config_path = Path(args.algorithm_config)
+    out_path = Path(args.output)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
     device = "cpu"
     print("Using device:", device)
 
-    # 1. Load a small model (CPU-friendly)
+    # Load GPT-2
     model_name = "gpt2"
     print(f"Loading model: {model_name}")
     model = AutoModelForCausalLM.from_pretrained(model_name).to(device)
@@ -32,29 +58,25 @@ def main():
         no_repeat_ngram_size=4,
     )
 
-    print("Loading KGW watermark...")
-    wm = AutoWatermark.load("KGW", transformers_config=transformers_config)
+    print(f"Loading KGW watermark with config: {algo_config_path}")
+    wm = AutoWatermark.load(
+        "KGW",
+        algorithm_config=str(algo_config_path),
+        transformers_config=transformers_config,
+    )
 
-    # 2. Load AG News dataset (train split, small subset)
-    print("Loading AG News dataset...")
-    # AG News on HF: columns include 'text' and 'label' :contentReference[oaicite:0]{index=0}
-    ds = load_dataset("ag_news", split="train[:200]")  # first 200 samples
+    print(f"Loading AG News train[:{args.num_samples}] ...")
+    ds = load_dataset("ag_news", split=f"train[:{args.num_samples}]")
 
-    out_path = Path("experiments/static_agnews_samples.jsonl")
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-
-    print(f"Writing results to: {out_path}")
     num_written = 0
+    print(f"Writing to: {out_path}")
 
     with out_path.open("w", encoding="utf-8") as f:
         for i, row in enumerate(ds):
-            base_text = row["text"]
-            label = int(row["label"])  # 0–3
+            prompt = row["text"]
+            label = int(row["label"])
 
-            # You can prepend label info if you want; for now we just use text as prompt
-            prompt = base_text
-
-            # 1) Watermarked
+            # 1) Watermarked generation
             wm_text = wm.generate_watermarked_text(prompt)
             wm_detect = wm.detect_watermark(wm_text)
             rec_wm = {
@@ -68,7 +90,7 @@ def main():
             f.write(json.dumps(rec_wm) + "\n")
             num_written += 1
 
-            # 2) Unwatermarked
+            # 2) Unwatermarked generation
             uwm_text = wm.generate_unwatermarked_text(prompt)
             uwm_detect = wm.detect_watermark(uwm_text)
             rec_uwm = {
@@ -83,7 +105,7 @@ def main():
             num_written += 1
 
             if (i + 1) % 50 == 0:
-                print(f"  Processed {i+1}/{len(ds)} news samples...")
+                print(f"  Processed {i+1}/{len(ds)} samples...")
 
     print(f"Done. Wrote {num_written} records to {out_path}")
 
