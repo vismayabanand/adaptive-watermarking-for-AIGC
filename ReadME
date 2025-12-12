@@ -1,1 +1,52 @@
-Adaptive Watermarking for Robust AIGC Attribution
+# Adaptive Watermarking for AI-Generated Content (KGW / MarkLLM)
+
+This repo contains our CS260 final project code for evaluating **static** vs **adaptive** watermarking of LLM-generated text using the **KGW** watermarking algorithm from **MarkLLM**, plus a robustness test under a **10% token deletion attack**. We run experiments on **AG News (200 samples)** with **GPT-2** on **CPU**.
+
+## Project Overview
+
+We compare three approaches:
+
+1. **Static watermarking (baseline)**  
+   Use a fixed watermark strength **δ = 2** for all prompts.
+
+2. **Rule-based adaptive watermarking**  
+   Compute **prompt perplexity** and choose δ per prompt:
+   - δ = 3 if PPL ≤ 20  
+   - δ = 2 if 20 < PPL ≤ 60  
+   - δ = 1 if PPL > 60  
+
+3. **RL-based adaptive watermarking (optional)**  
+   A prompt-conditioned δ policy trained to trade off:
+   - detectability (detect score / accuracy),
+   - text quality (perplexity),
+   - robustness (post-attack detection).
+
+We evaluate:
+- **Detection accuracy**
+- **Detect score statistics**
+- **Perplexity (quality proxy)**
+- **Per-δ breakdown (for adaptive)**
+- **Robustness** under 10% token deletion
+
+---
+
+## Repository Structure
+
+```text
+config/
+  KGW_delta_1.json
+  KGW_delta_2.json
+  KGW_delta_3.json
+
+experiments/
+  (generated .jsonl and _with_features.jsonl files live here)
+
+src/
+  static_experiment.py
+  static_experiment_agnews.py
+  adaptive_experiment_agnews.py
+  compute_features_generic.py
+  analyze_features_generic.py
+  eval_static_vs_adaptive.py
+  attack_random_delete_eval.py
+  (optional) rl_delta_selector.py / rl_train.py (if included)
