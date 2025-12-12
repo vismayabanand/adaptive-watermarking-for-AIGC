@@ -53,7 +53,6 @@ We evaluate watermarking effectiveness using:
 
 ## Repository Structure
 
-```text
 config/
   KGW_delta_1.json
   KGW_delta_2.json
@@ -83,7 +82,6 @@ pip install --upgrade pip
 pip install torch transformers datasets numpy tqdm
 pip install markllm==0.1.5
 
-
 All reported results were generated on CPU.
 
 Reproducing the Results
@@ -93,7 +91,6 @@ python src/static_experiment_agnews.py \
   --output experiments/static_agnews_delta2.jsonl \
   --num-samples 200
 
-
 This generates static watermarked and unwatermarked outputs.
 
 Step 2 — Rule-based adaptive AG News experiment
@@ -101,13 +98,9 @@ python src/adaptive_experiment_agnews.py \
   --output experiments/adaptive_agnews_delta_rule.jsonl \
   --num-samples 200
 
-
 δ is selected per prompt based on prompt perplexity:
-
 δ = 3 if PPL ≤ 20
-
 δ = 2 if 20 < PPL ≤ 60
-
 δ = 1 if PPL > 60
 
 Step 3 — Feature extraction
@@ -119,15 +112,10 @@ python src/compute_features_generic.py \
   --input experiments/adaptive_agnews_delta_rule.jsonl \
   --output experiments/adaptive_agnews_delta_rule_with_features.jsonl
 
-
 Extracted features include:
-
 Generated-text perplexity
-
 Detect score
-
 Token length
-
 Metadata for downstream analysis
 
 Step 4 — Static vs Adaptive evaluation
@@ -139,27 +127,17 @@ python src/eval_static_vs_adaptive.py \
 This reports:
 
 Detection accuracy
-
 Perplexity statistics
-
 Detect score statistics
-
 Per-δ breakdown for adaptive samples
 
 Step 5 — Robustness test (10% token deletion)
 python src/attack_random_delete_eval.py
-
-
 Evaluates detection accuracy before and after random deletion of 10% of tokens.
-
 RL-Based δ Selection (Extension)
-
 We further implement a reinforcement learning (RL) framework to automatically learn δ-selection.
-
 RL Design
-
 State: prompt perplexity, prompt length
-
 Action space: δ ∈ {1, 2, 3}
 
 Reward:
@@ -180,11 +158,8 @@ The RL-based method improves detectability and robustness over rule-based adapti
 Key Findings
 
 Static watermarking provides strong detection but degrades text quality.
-
 Rule-based adaptive watermarking improves quality but weakens detection.
-
 RL-based adaptive watermarking recovers detection strength without reverting to static watermarking.
-
 Prompt difficulty (perplexity) is a critical factor in watermark effectiveness.
 
 Authors & Contributions
@@ -192,27 +167,19 @@ Authors & Contributions
 Vismaya Anand Bolbandi
 
 Adaptive and RL δ-selection design
-
 AG News experiments
-
 Robustness analysis
-
 Report writing
 
 Gelvesh G
 
 Feature extraction and evaluation pipeline
-
 Experiment support and debugging
-
 Analysis contributions
-
 Both authors contributed to experimental design, implementation, and interpretation.
 
 References
 
 Kirchenbauer et al., A Watermark for Large Language Models, 2023
-
 Pan et al., MarkLLM: An Open-Source Toolkit for LLM Watermarking, 2024
-
 Radford et al., Language Models are Unsupervised Multitask Learners, 2019
