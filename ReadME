@@ -1,12 +1,12 @@
-# Adaptive Watermarking for AI-Generated Content  
-### Static, Adaptive, and RL-Based δ Selection using KGW (MarkLLM)
+Adaptive Watermarking for AI-Generated Content  
+Static, Adaptive, and RL-Based δ Selection using KGW (MarkLLM)
 
 This repository contains the code for our **CS260 Final Project** at **UC Riverside**.  
 We study **static vs adaptive watermarking** of LLM-generated text using the **KGW watermarking algorithm** from **MarkLLM**, and extend it with a **reinforcement learning (RL)–based δ selector**. We evaluate detection strength, text quality, and robustness on a real-world dataset.
 
 ---
 
-## Project Summary
+Project Summary
 
 Watermarking embeds a detectable statistical signature into LLM-generated text. Existing frameworks (e.g., MarkLLM) apply a **fixed watermark strength (δ)** to all prompts, which leads to a trade-off:
 
@@ -25,7 +25,7 @@ All experiments are conducted on **AG News (200 samples)** using **GPT-2** on **
 
 ---
 
-## Dataset
+Dataset
 
 - **AG News** (via HuggingFace `datasets`)
 - 200 samples
@@ -39,7 +39,7 @@ AG News provides diverse, real-world news topics and serves as a challenging ben
 
 ---
 
-## Metrics
+Metrics
 
 We evaluate watermarking effectiveness using:
 
@@ -51,7 +51,7 @@ We evaluate watermarking effectiveness using:
 
 ---
 
-## Repository Structure
+Repository Structure
 
 config/
   KGW_delta_1.json
